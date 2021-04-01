@@ -56,9 +56,18 @@ let Player  = class{
         this.position = position
         this.color = color
         this.setType(type)
-        this.limit = 100
+        this.limit = 1000
+        this.eatCount= 0
+        this.fontSize = 10
     }
     draw(ctx){
+        ctx.shadowColor = 'black';
+        ctx.shadowBlur = 3;
+        ctx.shadowOffsetX = 3;
+        ctx.shadowOffsetY = 3;
+        this.fontSize = 10+ 10* this.eatCount/100
+        ctx.font = this.fontSize+"px 'Open Sans', sans-serif"
+        ctx.textAlign = "center"
         ctx.fillStyle = this.color
         if(this.type == 1){
             ctx.fillRect(this.position.x, this.position.y, this.w, this.h)
@@ -67,6 +76,8 @@ let Player  = class{
             ctx.ellipse(this.position.x+ this.w/2, this.position.y+this.h/2, this.w/2, this.h/2, 0, 0, 2*Math.PI);
             ctx.fill()
         }
+        ctx.fillStyle = "Black"
+        ctx.strokeText(this.eatCount,this.position.x+ this.w/2, this.position.y+this.h/2+this.fontSize/4)
     }
     move(pos){
         this.position.x = pos.x - this.w/2
@@ -107,5 +118,6 @@ let Player  = class{
             this.w+=inc
             this.h+=inc
         }
+        this.eatCount++
     }
 }

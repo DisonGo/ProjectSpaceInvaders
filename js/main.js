@@ -102,7 +102,7 @@ window.ctx = ctx
 canvas.width = 400
 canvas.height = aHeight
 window.partSett.dynamicSpeedOn = false
-window.partSett.setParticleSpawnSpeed(20)
+window.partSett.setParticleSpawnSpeed(80)
 window.partSett.setSize(10, 10)
 window.partSett.setSpawnRange(0,window.canSett.can.width - window.partSett.w)
 window.partSett.setParticleSpeed(4)

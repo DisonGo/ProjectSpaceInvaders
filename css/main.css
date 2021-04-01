@@ -31,7 +31,7 @@ body{
     cursor: pointer;
 }
 .hiddenMenu{
-    opacity: 0;
+    opacity: 0.1;
 }
 .hiddenMenu:hover{
     opacity: 1;
