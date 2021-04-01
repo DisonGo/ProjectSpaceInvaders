@@ -289,14 +289,21 @@ function createBackground(canctx, can) {
         } else type = window.partSett.mode
         if (window.particleArr.length > 0) {
             createSucses = false
+            let tryN = 0
             while (!createSucses) {
+                if(tryN>=10)break
                 x = randomX()
                 y = -h
                 newPart = createParticle(x, y, w, h, color, type)
-                // for (let i = 0; i < window.particleArr.length; i++) {
-                //     if (!(newPart.colision(window.particleArr[i]))) createSucses = true
-                // }
                 createSucses = true
+                for (let i = 0; i < window.particleArr.length; i++) {
+                    if (newPart.collision(window.particleArr[i])) {
+                        createSucses = false
+                        break;
+                    }
+                }
+                tryN++
+                //createSucses = true
             }
         } else {
             x = randomX()
@@ -310,10 +317,19 @@ function createBackground(canctx, can) {
         if(typeof(window.Player)=="undefined")loadPlayer()
         else window.Player.draw(window.canSett.ctx)
     }
+    function checkCol(){
+        for(let i=window.particleArr.length-1;i>=0; i--){
+            if(window.Player.collision(window.particleArr[i])){
+                window.particleArr.splice(i--,1)
+                window.Player.increaseSize(0.125*2)
+            }
+        }
+    }
 
     function refreshInterval() {
         resetCanvas(canctx, can)
         checkOut()
+        checkCol()
         drawParticleArr()
         drawPlayer()
     }

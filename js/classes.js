@@ -33,9 +33,21 @@ let Particle = class {
         this.x += x
         this.y += y
     }
-    colision(anPart) {
-        return ((this.x + this.w >= anPart.x && this.x <= (anPart.x + anPart.w)) && (this.y + this.h >= anPart.y && this.y <= (anPart.y + anPart.h)))
-    }
+    collision(obj2){
+        let obj1 = this
+        let XColl=false;
+        let YColl=false;
+      
+        if ((obj1.x + obj1.w >= obj2.x) && (obj1.x <= obj2.x + obj2.w)) XColl = true;
+        if ((obj1.y + obj1.h >= obj2.y) && (obj1.y <= obj2.y + obj2.h)) YColl = true;
+      
+        if (XColl&YColl){
+            return true;
+        }
+        
+         
+        return false;
+      }
 }
 let Player  = class{
     constructor(position,w,h,color,type){
@@ -44,6 +56,7 @@ let Player  = class{
         this.position = position
         this.color = color
         this.setType(type)
+        this.limit = 100
     }
     draw(ctx){
         ctx.fillStyle = this.color
@@ -51,7 +64,7 @@ let Player  = class{
             ctx.fillRect(this.position.x, this.position.y, this.w, this.h)
         }else{
             ctx.beginPath()
-            ctx.ellipse(this.position.x+ this.w/2, this.position.y, this.w/2, this.h/2, 0, 0, 2*Math.PI);
+            ctx.ellipse(this.position.x+ this.w/2, this.position.y+this.h/2, this.w/2, this.h/2, 0, 0, 2*Math.PI);
             ctx.fill()
         }
     }
@@ -77,5 +90,22 @@ let Player  = class{
     }
     setColor(color){
         this.color = color
+    }
+    collision(obj2){
+        let obj1 = this
+        let XColl=false;
+        let YColl=false;
+      
+        if ((obj1.position.x + obj1.w >= obj2.x) && (obj1.position.x <= obj2.x + obj2.w)) XColl = true;
+        if ((obj1.position.y + obj1.h >= obj2.y) && (obj1.position.y <= obj2.y + obj2.h)) YColl = true;
+      
+        if (XColl&YColl){return true;}
+        return false;
+    }
+    increaseSize(inc){
+        if(Math.max(this.w,this.h)<this.limit){
+            this.w+=inc
+            this.h+=inc
+        }
     }
 }

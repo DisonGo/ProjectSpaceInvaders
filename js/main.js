@@ -83,23 +83,29 @@ window.partSett = {
     mode: ""
 }
 window.playerSett = {
-    w:30,
-    h:40,
+    w:70,
+    h:70,
     position : {
         x:window.canSett.can.width/2 - this.w/2,
         y:window.canSett.can.height - 60 - this.h
     },
     color:getRandCSSColor(),
-    type:"elipse"
+    type:"square",
+    setSize(w,h){
+        this.w = w
+        this.h = h
+    }
 }
 window.gameStarted = false
 window.canvas = canvas
 window.ctx = ctx
 canvas.width = 400
 canvas.height = aHeight
-window.partSett.setParticleSpawnSpeed(10)
+window.partSett.dynamicSpeedOn = false
+window.partSett.setParticleSpawnSpeed(20)
 window.partSett.setSize(10, 10)
 window.partSett.setSpawnRange(0,window.canSett.can.width - window.partSett.w)
 window.partSett.setParticleSpeed(4)
+window.playerSett.setSize(20,20)
 let menuButtons = []
 startGame()
