@@ -82,13 +82,24 @@ window.partSett = {
     },
     mode: ""
 }
-
-window.canvas = canvas;
-window.ctx = ctx;
-canvas.width = 400;
-canvas.height = aHeight;
-window.partSett.setParticleSpawnSpeed(20)
-window.partSett.setSize(50, 50)
+window.playerSett = {
+    w:30,
+    h:40,
+    position : {
+        x:window.canSett.can.width/2 - this.w/2,
+        y:window.canSett.can.height - 60 - this.h
+    },
+    color:getRandCSSColor(),
+    type:"elipse"
+}
+window.gameStarted = false
+window.canvas = canvas
+window.ctx = ctx
+canvas.width = 400
+canvas.height = aHeight
+window.partSett.setParticleSpawnSpeed(10)
+window.partSett.setSize(10, 10)
 window.partSett.setSpawnRange(0,window.canSett.can.width - window.partSett.w)
-let menuButtons = [];
-startGame();
+window.partSett.setParticleSpeed(4)
+let menuButtons = []
+startGame()

@@ -1,4 +1,5 @@
 let backgroundLoaded = false
+let playerLoaded = false
 let RangeVis = false
 let cooldown = false
 let turn = true
@@ -121,17 +122,14 @@ function startBut() {
         backgroundLoaded = switchBool(backgroundLoaded)
     }
     hideElem(menuButtons[0])
-    // ctx.strokeStyle = "black" 
-    // ctx.fillStyle = "black"
-    //for(let i = 0; i<menuButtons.length;i++){hideElem(menuButtons[i])} 
-    // ctx.strokeRect(0,0,canvas.width,canvas.height)
-    // ctx.fillRect(0,0,canvas.width,canvas.height)
-    // // setTimeout(function(){
-    // //     ctx.strokeStyle = "white" 
-    // //     ctx.fillStyle = "white"
-    // //     ctx.fillRect(0,0,canvas.width,canvas.height)
-    // //     for(let i = 0; i<menuButtons.length;i++){showElem(menuButtons[i])} 
-    // // },1000)
+    for(let i = 0; i<menuButtons.length;i++){
+        menuButtons[i].classList.add("hiddenMenu")
+    }
+    window.canSett.can.style.cursor = "none"
+    window.gameStarted = true
+    if(!playerLoaded){
+        loadPlayer()
+    }
 }
 
 function settingsBut() {
@@ -150,13 +148,21 @@ function settingsBut() {
             RangeVis = switchBool(RangeVis)
             window.setCooldown()
         }
+        if(window.gameStarted){
+            menuButtons[1].classList.toggle("hiddenMenu")
+        }
     }
 }
 
 function exitBut() {
-
+    window.location.reload()
 }
-
+function loadPlayer(){
+    let w = window.playerSett.w , h = window.playerSett.h , type = window.playerSett.type ,color = window.playerSett.color
+    let position = window.playerSett.position
+    window.Player = new Player(position,w,h,color,type)
+    window.Player.draw(window.canSett.ctx)
+}
 function loadMenu() {
     let butNum = 3;
     let butSet = {
@@ -300,11 +306,16 @@ function createBackground(canctx, can) {
         window.particleArr.push(newPart)
         window.createInter = setTimeout(createPartInterval, (1000 / window.partSett.particleSpawnPerSec))
     }
+    function drawPlayer(){
+        if(typeof(window.Player)=="undefined")loadPlayer()
+        else window.Player.draw(window.canSett.ctx)
+    }
 
     function refreshInterval() {
         resetCanvas(canctx, can)
         checkOut()
         drawParticleArr()
+        drawPlayer()
     }
 
     function dynamicSpeedInterval() {
@@ -321,6 +332,21 @@ function createBackground(canctx, can) {
         }
         window.refreshSpeed()
     }
+    window.canSett.can.addEventListener("mousemove",function(e){
+        if(typeof(window.Player)!=="undefined"){
+            let position = {
+                x:e.clientX- window.canSett.can.getBoundingClientRect().x,
+                y:e.clientY
+            }
+            window.Player.move(position)
+        }
+    })
+    window.canSett.can.addEventListener("click",function(){
+        if(typeof(window.Player)!=="undefined"){
+            window.Player.setColor(getRandCSSColor())
+            window.Player.switchType()
+        }
+    })
     if (window.partSett.dynamicSpeedOn) window.dynamicSpeedInter = setInterval(dynamicSpeedInterval, 100)
     window.createInter = setTimeout(createPartInterval, (1000 / window.partSett.particleSpawnPerSec))
     window.moveInter = setInterval(movePartInterval, 20)

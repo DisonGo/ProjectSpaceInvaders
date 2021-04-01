@@ -30,6 +30,12 @@ body{
     text-align: center;
     cursor: pointer;
 }
+.hiddenMenu{
+    opacity: 0;
+}
+.hiddenMenu:hover{
+    opacity: 1;
+}
 .noSelect {
     -webkit-touch-callout: none;
     -webkit-user-select: none;
