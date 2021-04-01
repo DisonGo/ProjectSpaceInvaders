@@ -59,6 +59,7 @@ let Player  = class{
         this.limit = 1000
         this.eatCount= 0
         this.fontSize = 10
+        this.calcActiveArea()
     }
     draw(ctx){
         ctx.shadowColor = 'black';
@@ -119,5 +120,13 @@ let Player  = class{
             this.h+=inc
         }
         this.eatCount++
+    }
+    calcActiveArea(){
+        this.activeArea = {
+            x1:this.x,
+            y1:this.y,
+            x2:this.x+ this.w,
+            y2:this.y+ this.h,
+        }
     }
 }

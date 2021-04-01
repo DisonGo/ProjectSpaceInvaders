@@ -228,6 +228,7 @@ function resetCanvas(canctx, can) {
 
 function createBackground(canctx, can) {
     window.particleArr = [];
+    window.particleArr.subArr = []
     if (typeof createInt !== "undefined") {
         clearInterval(createInt)
     }
@@ -239,7 +240,13 @@ function createBackground(canctx, can) {
     }
 
     function moveParticalesDown() {
-        for (let i = 0; i < window.particleArr.length; i++) {
+        function checkCol(elem, index){
+            if(window.Player.collision(elem)){
+                window.particleArr.splice(index,1)
+                window.Player.increaseSize(0.125*2)
+            }
+        }
+        for (let i=window.particleArr.length-1;i>=0; i--) {
             if (window.particleArr[i].type == "straight") {
                 window.particleArr[i].move(0, 1 * window.partSett.particleSpeed)
             } else {
@@ -247,6 +254,7 @@ function createBackground(canctx, can) {
                 if (window.particleArr[i].PI >= 6.28) window.particleArr[i].PI -= 6.28
                 window.particleArr[i].move(Math.cos(window.particleArr[i].PI) * window.particleArr[i].altitude * window.particleArr[i].k, 1 * window.partSett.particleSpeed)
             }
+            checkCol(window.particleArr[i],i)
         }
     }
 
@@ -296,14 +304,14 @@ function createBackground(canctx, can) {
                 y = -h
                 newPart = createParticle(x, y, w, h, color, type)
                 createSucses = true
-                for (let i = 0; i < window.particleArr.length; i++) {
+                for (let i = window.particleArr.length-1; i >= 0; i--) {
                     if (newPart.collision(window.particleArr[i])) {
                         createSucses = false
                         break;
                     }
                 }
                 tryN++
-                //createSucses = true
+                //  createSucses = true
             }
         } else {
             x = randomX()
@@ -317,19 +325,19 @@ function createBackground(canctx, can) {
         if(typeof(window.Player)=="undefined")loadPlayer()
         else window.Player.draw(window.canSett.ctx)
     }
-    function checkCol(){
-        for(let i=window.particleArr.length-1;i>=0; i--){
-            if(window.Player.collision(window.particleArr[i])){
-                window.particleArr.splice(i--,1)
-                window.Player.increaseSize(0.125*2)
-            }
-        }
-    }
+    // function checkCol(){
+    //     for(let i=window.particleArr.length-1;i>=0; i--){
+    //         if(window.Player.collision(window.particleArr[i])){
+    //             window.particleArr.splice(i--,1)
+    //             window.Player.increaseSize(0.125*2)
+    //         }
+    //     }
+    // }
 
     function refreshInterval() {
         resetCanvas(canctx, can)
         checkOut()
-        checkCol()
+        //checkCol()
         drawParticleArr()
         drawPlayer()
     }
