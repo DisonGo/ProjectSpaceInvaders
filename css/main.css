@@ -1,0 +1,40 @@
+body{
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Open Sans', sans-serif;
+}
+.centered{
+    padding: 0;
+    margin: auto;
+    display: block;
+}
+.transisted{
+    transition: all 0.4s;
+}
+.absol{
+    position: absolute;
+}
+.menuButtons{
+    bottom: 4px;
+    position: absolute;
+    background: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: black;
+    border: black 2px solid;
+    border-radius: 10%;
+    text-align: center;
+    cursor: pointer;
+}
+.noSelect {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
