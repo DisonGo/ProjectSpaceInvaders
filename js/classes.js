@@ -56,16 +56,21 @@ let Player  = class{
         this.position = position
         this.color = color
         this.setType(type)
-        this.limit = 1000
+        this.SizeLimit = 500
+        this.eatLimit = 500
         this.eatCount= 0
         this.fontSize = 10
         this.calcActiveArea()
+        this.SaveData = {
+            w:this.w,
+            h:this.h,
+            position:this.position,
+            color:this.color,
+            type:this.type
+        }
     }
     draw(ctx){
-        ctx.shadowColor = 'black';
-        ctx.shadowBlur = 3;
-        ctx.shadowOffsetX = 3;
-        ctx.shadowOffsetY = 3;
+        if(this.curCtx != ctx)this.curCtx = ctx
         this.fontSize = 10+ 10* this.eatCount/100
         ctx.font = this.fontSize+"px 'Open Sans', sans-serif"
         ctx.textAlign = "center"
@@ -79,6 +84,10 @@ let Player  = class{
         }
         ctx.fillStyle = "Black"
         ctx.strokeText(this.eatCount,this.position.x+ this.w/2, this.position.y+this.h/2+this.fontSize/4)
+    }
+    makePopUp(text){
+        ctx.font = this.fontSize/2+"px 'Open Sans', sans-serif"
+        ctx.strokeText(text,this.position.x+ this.w*4/5, this.position.y+this.h/5)
     }
     move(pos){
         this.position.x = pos.x - this.w/2
@@ -114,12 +123,27 @@ let Player  = class{
         if (XColl&YColl){return true;}
         return false;
     }
+
     increaseSize(inc){
-        if(Math.max(this.w,this.h)<this.limit){
+        // if(Math.max(this.w,this.h)<this.SizeLimit)
+        if(this.eatCount<this.eatLimit){
             this.w+=inc
             this.h+=inc
+            this.position.x-=inc/2
+            this.position.y-=inc/2
+        }
+        else{
+            this.switchType()
+            this.position.x+=this.w/2 - this.SaveData.w/2
+            this.position.y+=this.h/2 - this.SaveData.h/2
+            this.w = this.SaveData.w
+            this.h = this.SaveData.h
+            this.eatCount = 0
+            this.eatLimit+=100
+            return true
         }
         this.eatCount++
+        return false
     }
     calcActiveArea(){
         this.activeArea = {

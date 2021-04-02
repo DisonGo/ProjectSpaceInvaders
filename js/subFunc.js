@@ -46,9 +46,9 @@ function createRanges() {
                 window.canSett.can.width = newRoll.value
                 window.partSett.updateSpawnRange()
                 if(typeof window.particleArr !=="undefined"){
-                    for (let i = 0; i < window.particleArr.length; i++) {
-                        window.particleArr[i].move((newRoll.value - window.canSett.can.width) / 2, 0)
-                    }
+                    // for (let i = 0; i < window.particleArr.length; i++) {
+                    //     window.particleArr[i].move((newRoll.value - window.canSett.can.width) / 2, 0)
+                    // }
                     window.refreshRefresher();
                 }
             })
@@ -118,7 +118,7 @@ function showElem(elem) {
 
 function startBut() {
     if (!backgroundLoaded) {
-        loadBackground(ctx, canvas)
+        loadBackground(window.canSett.ctx, window.canSett.can)
         backgroundLoaded = switchBool(backgroundLoaded)
     }
     hideElem(menuButtons[0])
@@ -216,6 +216,19 @@ function loadMenu() {
 
 }
 
+async function createTimedAnimation(time,fps,func){
+    let promise = new Promise((resolve, reject) => {
+        let dat = new Date
+        setTimeout(() => resolve("готово!"), 13 - dat - window.refreshTimeStarted)
+      });
+    
+    let result = await promise;
+    let animInter = setInterval(func,1000/fps)
+    let timer = setTimeout(function(){
+        clearInterval(animInter)
+    },time)
+}
+
 function createParticle(x, y, w, h, color, type) {
     let newParticle = new Particle(x, y, w, h, color, type)
     return newParticle;
@@ -232,7 +245,12 @@ function createBackground(canctx, can) {
     if (typeof createInt !== "undefined") {
         clearInterval(createInt)
     }
-
+    function setShadow(){
+        canctx.shadowColor = 'black';
+        canctx.shadowBlur = 3;
+        canctx.shadowOffsetX = 3;
+        canctx.shadowOffsetY = 3;
+    }
     function drawParticleArr() {
         for (let i = 0; i < window.particleArr.length; i++) {
             window.particleArr[i].draw(canctx)
@@ -243,7 +261,12 @@ function createBackground(canctx, can) {
         function checkCol(elem, index){
             if(window.Player.collision(elem)){
                 window.particleArr.splice(index,1)
-                window.Player.increaseSize(0.125*2)
+                    if(window.Player.increaseSize(0.125*2))
+                    {
+                        createTimedAnimation(4000,100,function(){
+                            window.Player.makePopUp("+100")
+                        })
+                    }
             }
         }
         for (let i=window.particleArr.length-1;i>=0; i--) {
@@ -323,7 +346,7 @@ function createBackground(canctx, can) {
     }
     function drawPlayer(){
         if(typeof(window.Player)=="undefined")loadPlayer()
-        else window.Player.draw(window.canSett.ctx)
+        else window.Player.draw(canctx)
     }
     // function checkCol(){
     //     for(let i=window.particleArr.length-1;i>=0; i--){
@@ -335,6 +358,7 @@ function createBackground(canctx, can) {
     // }
 
     function refreshInterval() {
+        window.refreshTimeStarted = new Date
         resetCanvas(canctx, can)
         checkOut()
         //checkCol()
@@ -368,7 +392,7 @@ function createBackground(canctx, can) {
     window.canSett.can.addEventListener("click",function(){
         if(typeof(window.Player)!=="undefined"){
             window.Player.setColor(getRandCSSColor())
-            window.Player.switchType()
+            //window.Player.switchType()
         }
     })
     if (window.partSett.dynamicSpeedOn) window.dynamicSpeedInter = setInterval(dynamicSpeedInterval, 100)
