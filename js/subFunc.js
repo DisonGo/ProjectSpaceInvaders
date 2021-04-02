@@ -45,7 +45,7 @@ function createRanges() {
             newRoll.addEventListener("input", function () {
                 window.canSett.can.width = newRoll.value
                 window.partSett.updateSpawnRange()
-                if(typeof window.particleArr !=="undefined"){
+                if (typeof window.particleArr !== "undefined") {
                     // for (let i = 0; i < window.particleArr.length; i++) {
                     //     window.particleArr[i].move((newRoll.value - window.canSett.can.width) / 2, 0)
                     // }
@@ -122,12 +122,12 @@ function startBut() {
         backgroundLoaded = switchBool(backgroundLoaded)
     }
     hideElem(menuButtons[0])
-    for(let i = 0; i<menuButtons.length;i++){
+    for (let i = 0; i < menuButtons.length; i++) {
         menuButtons[i].classList.add("hiddenMenu")
     }
     window.canSett.can.style.cursor = "none"
     window.gameStarted = true
-    if(!playerLoaded){
+    if (!playerLoaded) {
         loadPlayer()
     }
 }
@@ -148,7 +148,7 @@ function settingsBut() {
             RangeVis = switchBool(RangeVis)
             window.setCooldown()
         }
-        if(window.gameStarted){
+        if (window.gameStarted) {
             menuButtons[1].classList.toggle("hiddenMenu")
         }
     }
@@ -157,12 +157,17 @@ function settingsBut() {
 function exitBut() {
     window.location.reload()
 }
-function loadPlayer(){
-    let w = window.playerSett.w , h = window.playerSett.h , type = window.playerSett.type ,color = window.playerSett.color
+
+function loadPlayer() {
+    let w = window.playerSett.w,
+        h = window.playerSett.h,
+        type = window.playerSett.type,
+        color = window.playerSett.color
     let position = window.playerSett.position
-    window.Player = new Player(position,w,h,color,type)
+    window.Player = new Player(position, w, h, color, type)
     window.Player.draw(window.canSett.ctx)
 }
+
 function loadMenu() {
     let butNum = 3;
     let butSet = {
@@ -216,21 +221,24 @@ function loadMenu() {
 
 }
 
-async function createTimedAnimation(time,fps,func){
-    let promise = new Promise((resolve, reject) => {
-        let dat = new Date
-        setTimeout(() => resolve("готово!"), 13 - dat - window.refreshTimeStarted)
-      });
-    
-    let result = await promise;
-    let animInter = setInterval(func,1000/fps)
-    let timer = setTimeout(function(){
-        clearInterval(animInter)
-    },time)
+function createTimedAnimation(time, fps, func) {
+    let newAnimationSett = {
+        time: time,
+        fps: fps,
+        func: func,
+        animationOn:true,
+        firstRun:true
+    }
+    if(typeof(window.animationArr)!=="undefined"){
+        window.animationArr.push(newAnimationSett)
+    }else {
+        window.animationArr = []
+        window.animationArr.push(newAnimationSett)
+    }
 }
 
-function createParticle(x, y, w, h, color, type) {
-    let newParticle = new Particle(x, y, w, h, color, type)
+function createParticle(x, y, w, h, color, type, viewType) {
+    let newParticle = new Particle(x, y, w, h, color, type, viewType)
     return newParticle;
 }
 
@@ -245,31 +253,50 @@ function createBackground(canctx, can) {
     if (typeof createInt !== "undefined") {
         clearInterval(createInt)
     }
-    function setShadow(){
+
+    function setShadow() {
         canctx.shadowColor = 'black';
         canctx.shadowBlur = 3;
         canctx.shadowOffsetX = 3;
         canctx.shadowOffsetY = 3;
     }
+
     function drawParticleArr() {
         for (let i = 0; i < window.particleArr.length; i++) {
             window.particleArr[i].draw(canctx)
         }
     }
 
-    function moveParticalesDown() {
-        function checkCol(elem, index){
-            if(window.Player.collision(elem)){
-                window.particleArr.splice(index,1)
-                    if(window.Player.increaseSize(0.125*2))
-                    {
-                        createTimedAnimation(4000,100,function(){
-                            window.Player.makePopUp("+100")
-                        })
+    function drawAnimations() {
+        if (typeof (window.animationArr) !== "undefined") {
+            for (let i = window.animationArr.length - 1; i >= 0; i--) {
+                let timer
+                if(window.animationArr[i].animationOn){
+                    window.animationArr[i].func()
+                    if(window.animationArr[i].firstRun){
+                        timer = setTimeout(function () {
+                            window.animationArr[i].animationOn = false
+                            window.animationArr.splice(i)
+                        }, window.animationArr[i].time)
+                        window.animationArr[i].firstRun = false
                     }
+                }
             }
         }
-        for (let i=window.particleArr.length-1;i>=0; i--) {
+    }
+
+    function moveParticalesDown() {
+        function checkCol(elem, index) {
+            if (window.Player.collision(elem)) {
+                window.particleArr.splice(index, 1)
+                if (window.Player.increaseSize(0.125 * 2)) {
+                    createTimedAnimation(4000, 100, function () {
+                        window.Player.makePopUp("+100")
+                    })
+                }
+            }
+        }
+        for (let i = window.particleArr.length - 1; i >= 0; i--) {
             if (window.particleArr[i].type == "straight") {
                 window.particleArr[i].move(0, 1 * window.partSett.particleSpeed)
             } else {
@@ -277,7 +304,7 @@ function createBackground(canctx, can) {
                 if (window.particleArr[i].PI >= 6.28) window.particleArr[i].PI -= 6.28
                 window.particleArr[i].move(Math.cos(window.particleArr[i].PI) * window.particleArr[i].altitude * window.particleArr[i].k, 1 * window.partSett.particleSpeed)
             }
-            checkCol(window.particleArr[i],i)
+            checkCol(window.particleArr[i], i)
         }
     }
 
@@ -303,11 +330,12 @@ function createBackground(canctx, can) {
     }
 
     function createPartInterval() {
-        let x, y, h, w, color, type, newPart, createSucses = false
+        let x, y, h, w, color, moveType, viewType, newPart, createSucses = false
         w = window.partSett.w
         h = window.partSett.h
         window.partSett.setColor()
         color = window.partSett.color
+        viewType = window.partSett.viewType
         let chance = Math.round(getRandom(0, 1))
         window.partSett.setMode()
 
@@ -315,19 +343,19 @@ function createBackground(canctx, can) {
             return getRandom(window.partSett.spawnRange.begin, window.partSett.spawnRange.end)
         }
         if (window.partSett.mode == "all") {
-            if (Math.round(getRandom(0, 1))) type = "straight"
-            else type = "sin";
-        } else type = window.partSett.mode
+            if (Math.round(getRandom(0, 1))) moveType = "straight"
+            else moveType = "sin";
+        } else moveType = window.partSett.mode
         if (window.particleArr.length > 0) {
             createSucses = false
             let tryN = 0
             while (!createSucses) {
-                if(tryN>=10)break
+                if (tryN >= 10) break
                 x = randomX()
                 y = -h
-                newPart = createParticle(x, y, w, h, color, type)
+                newPart = createParticle(x, y, w, h, color, moveType, viewType)
                 createSucses = true
-                for (let i = window.particleArr.length-1; i >= 0; i--) {
+                for (let i = window.particleArr.length - 1; i >= 0; i--) {
                     if (newPart.collision(window.particleArr[i])) {
                         createSucses = false
                         break;
@@ -339,13 +367,14 @@ function createBackground(canctx, can) {
         } else {
             x = randomX()
             y = -h
-            newPart = createParticle(x, y, w, h, color, type)
+            newPart = createParticle(x, y, w, h, color, moveType, viewType)
         }
         window.particleArr.push(newPart)
         window.createInter = setTimeout(createPartInterval, (1000 / window.partSett.particleSpawnPerSec))
     }
-    function drawPlayer(){
-        if(typeof(window.Player)=="undefined")loadPlayer()
+
+    function drawPlayer() {
+        if (typeof (window.Player) == "undefined") loadPlayer()
         else window.Player.draw(canctx)
     }
     // function checkCol(){
@@ -358,12 +387,13 @@ function createBackground(canctx, can) {
     // }
 
     function refreshInterval() {
-        window.refreshTimeStarted = new Date
+        window.refreshTimeStarted = new Date()
         resetCanvas(canctx, can)
         checkOut()
         //checkCol()
         drawParticleArr()
         drawPlayer()
+        drawAnimations()
     }
 
     function dynamicSpeedInterval() {
@@ -380,17 +410,24 @@ function createBackground(canctx, can) {
         }
         window.refreshSpeed()
     }
-    window.canSett.can.addEventListener("mousemove",function(e){
-        if(typeof(window.Player)!=="undefined"){
+    window.partSett.switchPartViewType = function () {
+        for (let elem of window.particleArr) {
+            elem.switchViewType()
+        }
+        if (window.partSett.viewType == "square") window.partSett.viewType = "circle"
+        else window.partSett.viewType = "square"
+    }
+    window.canSett.can.addEventListener("mousemove", function (e) {
+        if (typeof (window.Player) !== "undefined") {
             let position = {
-                x:e.clientX- window.canSett.can.getBoundingClientRect().x,
-                y:e.clientY
+                x: e.clientX - window.canSett.can.getBoundingClientRect().x,
+                y: e.clientY
             }
             window.Player.move(position)
         }
     })
-    window.canSett.can.addEventListener("click",function(){
-        if(typeof(window.Player)!=="undefined"){
+    window.canSett.can.addEventListener("click", function () {
+        if (typeof (window.Player) !== "undefined") {
             window.Player.setColor(getRandCSSColor())
             //window.Player.switchType()
         }

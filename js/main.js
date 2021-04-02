@@ -61,6 +61,7 @@ window.partSett = {
         2: "onlyStraight",
         3: "onlySin"
     },
+    viewType:"circle",
     setMode() {
         for (key in this.typeMods) {
             if (key == this.curTypeMode)
@@ -106,6 +107,6 @@ window.partSett.setParticleSpawnSpeed(100)
 window.partSett.setSize(10, 10)
 window.partSett.setSpawnRange(0,window.canSett.can.width - window.partSett.w)
 window.partSett.setParticleSpeed(4)
-window.playerSett.setSize(20,20)
+window.playerSett.setSize(50,50)
 let menuButtons = []
 startGame()

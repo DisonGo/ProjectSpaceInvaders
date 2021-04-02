@@ -1,13 +1,15 @@
-let Particle = class {
-    constructor(x, y, w, h, color, type) {
+let Particle = class{
+    constructor(x, y, w, h, color, moveType,viewType) {
         this.x = x
         this.y = y
         this.w = w
         this.h = h
         this.r = window.partSett.w/2
         this.color = color
-        this.type = type
-        if (type == "straight") {
+        this.moveType = moveType
+        this.viewType = viewType
+        
+        if (moveType == "straight") {
             this.k = 0
         } else {
             this.refreshSpeed()
@@ -17,17 +19,21 @@ let Particle = class {
         }
     }
     refreshSpeed() {
-        if (this.type == "sin") {
+        if (this.moveType == "sin") {
             this.altitude = getRandom(window.partSett.particleSpeed * window.partSett.particleSpeed / 10, window.partSett.particleSpeed)
         }
     }
     draw(ctx) {
         ctx.beginPath()
         ctx.fillStyle = this.color
-        //ctx.arc(this.x, this.y, this.r, 0, 2*Math.PI, 1)
-        //ctx.fill()
-        //ctx.fillStyle = this.color
-        ctx.fillRect(this.x, this.y, this.w, this.h)
+        if(this.viewType=="circle"){
+            ctx.arc(this.x, this.y, this.r, 0, 2*Math.PI, 1)
+            ctx.fill()
+            ctx.fillStyle = this.color
+        }
+        else{
+            ctx.fillRect(this.x, this.y, this.w, this.h)
+        }
     }
     move(x, y) {
         this.x += x
@@ -44,12 +50,28 @@ let Particle = class {
         if (XColl&YColl){
             return true;
         }
-        
-         
         return false;
-      }
+    }
+    switchViewType(){
+        if(this.viewType == "circle")this.viewType = "square"
+        else this.viewType = "circle"
+    }
 }
-let Player  = class{
+let BadPart = class extends Particle {
+    constructor(x, y, w, h, moveType,viewType,damage){
+        super(x, y, w, h, "red", moveType,viewType)
+        this.damage = damage
+    }
+    inflictStatus(obj,statusSett,statusFunc){
+        if(obj.statusCapable){
+            obj.getStatus(statusSett,statusFunc)
+        }
+    }
+    inflictDamage(obj){
+
+    }
+}
+let Player = class {
     constructor(position,w,h,color,type){
         this.w = w
         this.h = h
@@ -57,9 +79,11 @@ let Player  = class{
         this.color = color
         this.setType(type)
         this.SizeLimit = 500
-        this.eatLimit = 500
-        this.eatCount= 0
+        this.lifeLimit = 500
+        this.life = 1
         this.fontSize = 10
+        this.hasHealth = true
+        this.statusCapable = true
         this.calcActiveArea()
         this.SaveData = {
             w:this.w,
@@ -71,7 +95,7 @@ let Player  = class{
     }
     draw(ctx){
         if(this.curCtx != ctx)this.curCtx = ctx
-        this.fontSize = 10+ 10* this.eatCount/100
+        this.fontSize = 10+ 10* this.life/100
         ctx.font = this.fontSize+"px 'Open Sans', sans-serif"
         ctx.textAlign = "center"
         ctx.fillStyle = this.color
@@ -83,11 +107,12 @@ let Player  = class{
             ctx.fill()
         }
         ctx.fillStyle = "Black"
-        ctx.strokeText(this.eatCount,this.position.x+ this.w/2, this.position.y+this.h/2+this.fontSize/4)
+        ctx.strokeText(this.life,this.position.x+ this.w/2, this.position.y+this.h/2+this.fontSize/4)
     }
     makePopUp(text){
-        ctx.font = this.fontSize/2+"px 'Open Sans', sans-serif"
-        ctx.strokeText(text,this.position.x+ this.w*4/5, this.position.y+this.h/5)
+        ctx.fillStyle = "green"
+        ctx.font = this.fontSize/2+ Math.max(this.w,this.h)/4+"px 'Open Sans', sans-serif"
+        ctx.fillText(text,this.position.x+ this.w*4/5, this.position.y+this.h/5)
     }
     move(pos){
         this.position.x = pos.x - this.w/2
@@ -104,6 +129,10 @@ let Player  = class{
             default:
                 console.log("Wrong type input");
         }
+    }
+    setSize(w,h){
+        this.w = w
+        this.h = h
     }
     switchType(){
         if(this.type == 1)this.type = 2
@@ -126,7 +155,7 @@ let Player  = class{
 
     increaseSize(inc){
         // if(Math.max(this.w,this.h)<this.SizeLimit)
-        if(this.eatCount<this.eatLimit){
+        if(this.life<this.lifeLimit){
             this.w+=inc
             this.h+=inc
             this.position.x-=inc/2
@@ -138,11 +167,11 @@ let Player  = class{
             this.position.y+=this.h/2 - this.SaveData.h/2
             this.w = this.SaveData.w
             this.h = this.SaveData.h
-            this.eatCount = 0
-            this.eatLimit+=100
+            this.life = 1
+            this.lifeLimit+=100
             return true
         }
-        this.eatCount++
+        this.life++
         return false
     }
     calcActiveArea(){
@@ -152,5 +181,13 @@ let Player  = class{
             x2:this.x+ this.w,
             y2:this.y+ this.h,
         }
+    }
+    ifDead(){
+        if(this.life<0){
+
+        }
+    }
+    dead(){
+
     }
 }
