@@ -226,19 +226,30 @@ function createTimedAnimation(time, fps, func) {
         time: time,
         fps: fps,
         func: func,
-        animationOn:true,
-        firstRun:true
+        animationOn: true,
+        firstRun: true
     }
-    if(typeof(window.animationArr)!=="undefined"){
+    if (typeof (window.animationArr) !== "undefined") {
         window.animationArr.push(newAnimationSett)
-    }else {
+    } else {
         window.animationArr = []
         window.animationArr.push(newAnimationSett)
     }
 }
 
-function createParticle(x, y, w, h, color, type, viewType) {
-    let newParticle = new Particle(x, y, w, h, color, type, viewType)
+function createParticle(x, y, w, h, color, moveType, viewType, type) {
+    let newParticle
+    switch (type) {
+        case "Particle":
+            newParticle = new Particle(x, y, w, h, color, moveType, viewType)
+            break
+        case "Bad Particle":
+            newParticle = new BadPart(x, y, w, h, color, moveType, viewType)
+            break
+        case "Damage Particle":
+            newParticle = new DamagePart(x, y, w, h, color, moveType, viewType, arguments[arguments.length - 1])
+            break
+    }
     return newParticle;
 }
 
@@ -271,9 +282,9 @@ function createBackground(canctx, can) {
         if (typeof (window.animationArr) !== "undefined") {
             for (let i = window.animationArr.length - 1; i >= 0; i--) {
                 let timer
-                if(window.animationArr[i].animationOn){
+                if (window.animationArr[i].animationOn) {
                     window.animationArr[i].func()
-                    if(window.animationArr[i].firstRun){
+                    if (window.animationArr[i].firstRun) {
                         timer = setTimeout(function () {
                             window.animationArr[i].animationOn = false
                             window.animationArr.splice(i)
@@ -288,8 +299,11 @@ function createBackground(canctx, can) {
     function moveParticalesDown() {
         function checkCol(elem, index) {
             if (window.Player.collision(elem)) {
+                if(elem.type == "Damage Particle"){
+                    elem.inflictDamage(window.Player,elem.damage)
+                }
                 window.particleArr.splice(index, 1)
-                if (window.Player.increaseSize(0.125 * 2)) {
+                if (window.Player.increaseSize(2)) {
                     createTimedAnimation(4000, 100, function () {
                         window.Player.makePopUp("+100")
                     })
@@ -330,13 +344,13 @@ function createBackground(canctx, can) {
     }
 
     function createPartInterval() {
-        let x, y, h, w, color, moveType, viewType, newPart, createSucses = false
+        let x, y, h, w, color, moveType, viewType, type, newPart, createSucses = false
         w = window.partSett.w
         h = window.partSett.h
         window.partSett.setColor()
         color = window.partSett.color
         viewType = window.partSett.viewType
-        let chance = Math.round(getRandom(0, 1))
+        let chance
         window.partSett.setMode()
 
         function randomX() {
@@ -346,6 +360,14 @@ function createBackground(canctx, can) {
             if (Math.round(getRandom(0, 1))) moveType = "straight"
             else moveType = "sin";
         } else moveType = window.partSett.mode
+        chance = Math.round(getRandom(0, 10))
+        if (chance == 0) {
+            type = "Damage Particle"
+            w*=1.5
+            h*=1.5
+        } else {
+            type = "Particle"
+        }
         if (window.particleArr.length > 0) {
             createSucses = false
             let tryN = 0
@@ -353,7 +375,7 @@ function createBackground(canctx, can) {
                 if (tryN >= 10) break
                 x = randomX()
                 y = -h
-                newPart = createParticle(x, y, w, h, color, moveType, viewType)
+                newPart = createParticle(x, y, w, h, color, moveType, viewType, type, {value:10})
                 createSucses = true
                 for (let i = window.particleArr.length - 1; i >= 0; i--) {
                     if (newPart.collision(window.particleArr[i])) {
@@ -367,7 +389,7 @@ function createBackground(canctx, can) {
         } else {
             x = randomX()
             y = -h
-            newPart = createParticle(x, y, w, h, color, moveType, viewType)
+            newPart = createParticle(x, y, w, h, color, moveType, viewType,type,{value:10})
         }
         window.particleArr.push(newPart)
         window.createInter = setTimeout(createPartInterval, (1000 / window.partSett.particleSpawnPerSec))

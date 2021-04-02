@@ -1,21 +1,21 @@
-let Particle = class{
-    constructor(x, y, w, h, color, moveType,viewType) {
+let Particle = class {
+    constructor(x, y, w, h, color, moveType, viewType) {
         this.x = x
         this.y = y
         this.w = w
         this.h = h
-        this.r = window.partSett.w/2
+        this.r = window.partSett.w / 2
         this.color = color
         this.moveType = moveType
         this.viewType = viewType
-        
+        this.type = "particle"
         if (moveType == "straight") {
             this.k = 0
         } else {
             this.refreshSpeed()
             this.k = getRandom(0, 1)
             this.PI = 0
-            this.incriment = getRandom(0.04,0.3)
+            this.incriment = getRandom(0.04, 0.3)
         }
     }
     refreshSpeed() {
@@ -26,12 +26,11 @@ let Particle = class{
     draw(ctx) {
         ctx.beginPath()
         ctx.fillStyle = this.color
-        if(this.viewType=="circle"){
-            ctx.arc(this.x, this.y, this.r, 0, 2*Math.PI, 1)
+        if (this.viewType == "circle") {
+            ctx.arc(this.x, this.y, this.r, 0, 2 * Math.PI, 1)
             ctx.fill()
             ctx.fillStyle = this.color
-        }
-        else{
+        } else {
             ctx.fillRect(this.x, this.y, this.w, this.h)
         }
     }
@@ -39,40 +38,50 @@ let Particle = class{
         this.x += x
         this.y += y
     }
-    collision(obj2){
+    collision(obj2) {
         let obj1 = this
-        let XColl=false;
-        let YColl=false;
-      
+        let XColl = false;
+        let YColl = false;
+
         if ((obj1.x + obj1.w >= obj2.x) && (obj1.x <= obj2.x + obj2.w)) XColl = true;
         if ((obj1.y + obj1.h >= obj2.y) && (obj1.y <= obj2.y + obj2.h)) YColl = true;
-      
-        if (XColl&YColl){
+
+        if (XColl & YColl) {
             return true;
         }
         return false;
     }
-    switchViewType(){
-        if(this.viewType == "circle")this.viewType = "square"
+    switchViewType() {
+        if (this.viewType == "circle") this.viewType = "square"
         else this.viewType = "circle"
     }
 }
 let BadPart = class extends Particle {
-    constructor(x, y, w, h, moveType,viewType,damage){
-        super(x, y, w, h, "red", moveType,viewType)
-        this.damage = damage
+    constructor(x, y, w, h, color, moveType, viewType) {
+        super(x, y, w, h, color, moveType, viewType)
+        this.type = "Bad Particle" 
     }
-    inflictStatus(obj,statusSett,statusFunc){
-        if(obj.statusCapable){
-            obj.getStatus(statusSett,statusFunc)
+    inflictStatus(obj, status) {
+        if (obj.statusCapable) {
+            obj.getStatus(status)
         }
     }
-    inflictDamage(obj){
-
+    inflictDamage(obj, damage) {
+        if (obj.hasHealth) {
+            obj.getDamage(damage)
+        }
+    }
+}
+let DamagePart = class extends BadPart {
+    constructor(x, y, w, h, color, moveType, viewType,damage){
+        super(x, y, w, h, color, moveType, viewType)
+        this.type = "Damage Particle"
+        this.damage = damage
+        this.color = "white"
     }
 }
 let Player = class {
-    constructor(position,w,h,color,type){
+    constructor(position, w, h, color, type) {
         this.w = w
         this.h = h
         this.position = position
@@ -81,113 +90,150 @@ let Player = class {
         this.SizeLimit = 500
         this.lifeLimit = 500
         this.life = 1
+        this.eatMulti = 1/8
         this.fontSize = 10
         this.hasHealth = true
         this.statusCapable = true
+        this.statusList = []
         this.calcActiveArea()
         this.SaveData = {
-            w:this.w,
-            h:this.h,
-            position:this.position,
-            color:this.color,
-            type:this.type
+            w: this.w,
+            h: this.h,
+            position: this.position,
+            color: this.color,
+            type: this.type
         }
     }
-    draw(ctx){
-        if(this.curCtx != ctx)this.curCtx = ctx
-        this.fontSize = 10+ 10* this.life/100
-        ctx.font = this.fontSize+"px 'Open Sans', sans-serif"
+    draw(ctx) {
+        if (this.curCtx != ctx) this.curCtx = ctx
+        this.fontSize = 10 + 10 * this.life / 100
+        ctx.font = this.fontSize + "px 'Open Sans', sans-serif"
         ctx.textAlign = "center"
         ctx.fillStyle = this.color
-        if(this.type == 1){
+        if (this.type == 1) {
             ctx.fillRect(this.position.x, this.position.y, this.w, this.h)
-        }else{
+        } else {
             ctx.beginPath()
-            ctx.ellipse(this.position.x+ this.w/2, this.position.y+this.h/2, this.w/2, this.h/2, 0, 0, 2*Math.PI);
+            ctx.ellipse(this.position.x + this.w / 2, this.position.y + this.h / 2, this.w / 2, this.h / 2, 0, 0, 2 * Math.PI);
             ctx.fill()
         }
         ctx.fillStyle = "Black"
-        ctx.strokeText(this.life,this.position.x+ this.w/2, this.position.y+this.h/2+this.fontSize/4)
+        ctx.strokeText(this.life, this.position.x + this.w / 2, this.position.y + this.h / 2 + this.fontSize / 4)
     }
-    makePopUp(text){
+    makePopUp(text) {
         ctx.fillStyle = "green"
-        ctx.font = this.fontSize/2+ Math.max(this.w,this.h)/4+"px 'Open Sans', sans-serif"
-        ctx.fillText(text,this.position.x+ this.w*4/5, this.position.y+this.h/5)
+        ctx.font = this.fontSize / 2 + Math.max(this.w, this.h) / 4 + "px 'Open Sans', sans-serif"
+        ctx.fillText(text, this.position.x + this.w * 4 / 5, this.position.y + this.h / 5)
     }
-    move(pos){
-        this.position.x = pos.x - this.w/2
-        this.position.y = pos.y - this.h/2
+    move(pos) {
+        this.position.x = pos.x - this.w / 2
+        this.position.y = pos.y - this.h / 2
     }
-    setType(t){
-        switch(t){
+    setType(t) {
+        switch (t) {
             case "square":
                 this.type = 1
                 break;
             case "elipse":
                 this.type = 2
-                break; 
+                break;
             default:
                 console.log("Wrong type input");
         }
     }
-    setSize(w,h){
+    setSize(w, h) {
         this.w = w
         this.h = h
     }
-    switchType(){
-        if(this.type == 1)this.type = 2
+    switchType() {
+        if (this.type == 1) this.type = 2
         else this.type = 1
     }
-    setColor(color){
+    setColor(color) {
         this.color = color
     }
-    collision(obj2){
+    collision(obj2) {
         let obj1 = this
-        let XColl=false;
-        let YColl=false;
-      
+        let XColl = false;
+        let YColl = false;
+
         if ((obj1.position.x + obj1.w >= obj2.x) && (obj1.position.x <= obj2.x + obj2.w)) XColl = true;
         if ((obj1.position.y + obj1.h >= obj2.y) && (obj1.position.y <= obj2.y + obj2.h)) YColl = true;
-      
-        if (XColl&YColl){return true;}
+
+        if (XColl & YColl) {
+            return true;
+        }
         return false;
     }
 
-    increaseSize(inc){
+    increaseSize(inc) {
         // if(Math.max(this.w,this.h)<this.SizeLimit)
-        if(this.life<this.lifeLimit){
-            this.w+=inc
-            this.h+=inc
-            this.position.x-=inc/2
-            this.position.y-=inc/2
-        }
-        else{
+        inc *=this.eatMulti
+        if (this.life < this.lifeLimit) {
+            this.w += inc
+            this.h += inc
+            this.position.x -= inc / 2
+            this.position.y -= inc / 2
+        } else {
             this.switchType()
-            this.position.x+=this.w/2 - this.SaveData.w/2
-            this.position.y+=this.h/2 - this.SaveData.h/2
+            this.position.x += this.w / 2 - this.SaveData.w / 2
+            this.position.y += this.h / 2 - this.SaveData.h / 2
             this.w = this.SaveData.w
             this.h = this.SaveData.h
             this.life = 1
-            this.lifeLimit+=100
+            this.lifeLimit += 100
             return true
         }
         this.life++
         return false
     }
-    calcActiveArea(){
+    calcActiveArea() {
         this.activeArea = {
-            x1:this.x,
-            y1:this.y,
-            x2:this.x+ this.w,
-            y2:this.y+ this.h,
+            x1: this.x,
+            y1: this.y,
+            x2: this.x + this.w,
+            y2: this.y + this.h,
         }
     }
-    ifDead(){
-        if(this.life<0){
+    getStatus(status) {
+        if (status.tickType) {
+            status.tickInt = setInterval(status.func, status.tickDuration)
+            status.durationTimerFunc = () => {
+                clearInterval(status.tickInt)
+            }
+            status.durationTimer = setTimeout(status.durationTimerFunc, status.duration)
+        } else {
+            status.func()
+            status.durationTimerFunc = () => {
+                this.clearStatus(status)
+            }
+            status.durationTimer = setTimeout(status.durationTimerFunc, status.duration)
+        }
+        this.statusList.push(status)
+    }
+    clearStatus(status) {
+        status.clear()
+        for (let i = this.statusList.length - 1; i >= 0; i--) {
+            if (this.statusList[i].id == status.id) {
+                this.statusList.splice(i)
+            }
+        }
+    }
+    getDamage(damage) {
+        this.life -= damage.value
+        damage.value*=this.eatMulti
+        this.w -= damage.value
+        this.h -= damage.value
+        this.position.x += damage.value/2
+        this.position.y += damage.value/2
 
-        }
+        if (this.ifDead()) this.dead()
     }
-    dead(){
+    ifDead() {
+        if (this.life < 0) return true
+        else return false
+    }
+    dead() {
 
     }
 }
