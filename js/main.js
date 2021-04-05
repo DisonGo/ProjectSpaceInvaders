@@ -97,9 +97,6 @@ window.playerSett = {
         this.h = h
     }
 }
-function testFunc (){
-    
-}
 window.gameStarted = false
 window.canvas = canvas
 window.ctx = ctx
