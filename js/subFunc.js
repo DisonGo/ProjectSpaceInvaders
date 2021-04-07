@@ -64,14 +64,37 @@ function createRanges() {
         }
         document.body.insertBefore(newRoll, document.body.firstChild)
     }
-    widthRange.value = canvas.width
+    widthRange.value = window.canSett.can.width
     speedRange.value = window.partSett.particleSpeed
 }
 
+function preLoadPlayerConsrtuctor() {
+    let constructCanvas = document.createElement("canvas")
+    constructCanvas.height = aHeight
+    constructCanvas.width = 600
+    constructCanvas.classList.add("centered")
+    constructCanvas.id = "constrCanvas"
+    document.body.insertBefore(constructCanvas, document.body.firstChild)
+    let ctx = constructCanvas.getContext('2d');
+    window.constrCanSett = {
+        can: constructCanvas,
+        ctx: ctx,
+        background: "pink"
+    }
+    loadUI(ctx, constructCanvas)
+    window.addEventListener("resize", function () {
+        updCanvasSize(constructCanvas)
+        window.UI.refreshRefresher()
+    });
+}
+
 function updCanvasSize(can) {
-    //can.width = aWidth
-    can.height = aHeight
-    window.partSett.updateSpawnRange()
+    if (typeof (can) !== "undefined") {
+        can.height = aHeight
+        if (can == window.canSett.can) {
+            window.partSett.updateSpawnRange()
+        }
+    }
 }
 
 function updateInputRange() {
@@ -84,8 +107,8 @@ function RESIZE() {
     updateSizes()
     updateInputRange()
     resizeBody()
-    updCanvasSize(canvas)
-    window.refreshRefresher()
+    updCanvasSize(window.canSett.can)
+    if (window.gameStarted) window.refreshRefresher()
 }
 
 function switchDispElemTo(elem, newDisplay) {
@@ -165,10 +188,14 @@ function loadPlayer() {
         color = window.playerSett.color
     let position = window.playerSett.position
     window.Player = new Player(position, w, h, color, type)
+    if(typeof(window.playerSkin)!=="undefined"){
+        window.Player.loadSkin(window.playerSkin)
+    }
     window.Player.draw(window.canSett.ctx)
 }
 
 function loadMenu() {
+    showElem(window.canSett.can)
     let butNum = 3;
     let butSet = {
         width: 70,
@@ -253,9 +280,402 @@ function createParticle(x, y, w, h, color, moveType, viewType, type) {
     return newParticle;
 }
 
+function drawAnimations() {
+    if (typeof (window.animationArr) !== "undefined") {
+        for (let i = window.animationArr.length - 1; i >= 0; i--) {
+            let timer
+            if (window.animationArr[i].animationOn) {
+                window.animationArr[i].func()
+                if (window.animationArr[i].firstRun) {
+                    timer = setTimeout(function () {
+                        window.animationArr[i].animationOn = false
+                        window.animationArr.splice(i)
+                    }, window.animationArr[i].time)
+                    window.animationArr[i].firstRun = false
+                }
+            }
+        }
+    }
+}
+
+function checkUIButLists() {
+    if (typeof (window.UI.buttonArr) !== "undefined") {
+        let arr = window.UI.buttonArr
+        if (arr.length > 1) {
+            for (let i = 0; i < arr.length; i++) {
+                for (let j = i+1; j < arr.length; j++) {
+                    if (arr[i].DOM.listId == arr[j].DOM.listId) {
+                        arr[i].DOM.listArr.push(arr[j])
+                        arr[j].DOM.listArr.push(arr[i])
+                    }
+                }
+            }
+        }
+    }
+}
+
 function resetCanvas(canctx, can) {
     canctx.fillStyle = window.canSett.background
     canctx.fillRect(0, 0, can.width, can.height)
+}
+
+function loadUI(ctx, can) {
+    window.UI = {}
+    let UI = window.UI
+    UI.buttonArr = []
+    UI.buttonArr.searchById = (id)=>{
+        for(let elem of UI.buttonArr){
+            if(elem.DOM.id == id)return elem 
+        }
+        return false
+    }
+    UI.createSett = {}
+    UI.createMod = false
+    can.playerPartArr = []
+    let test
+    function closePlayerConstructor() {
+        //window.UI = {}
+        let cordsx1 = [],cordsy1 = []
+        let cordsx2 = [],cordsy2 = []
+        for(let elem of can.playerPartArr)
+        {
+            elem.calcEdges()
+            cordsx1.push(elem.edges.x1)
+            cordsx2.push(elem.edges.x2)
+            cordsy1.push(elem.edges.y1)
+            cordsy2.push(elem.edges.y2)
+        }
+        function sor(a,b) {
+            return a-b
+        }
+        let playerCords = {
+            x1:(cordsx1.sort(sor))[0],
+            y1:(cordsy1.sort(sor))[0],
+            x2:(cordsx2.sort(sor))[cordsx2.length-1],
+            y2:(cordsy2.sort(sor))[cordsy2.length-1],
+            mid : {
+                x:this.x1 + (this.x2 - this.x1)/2,
+                y:this.y1 + (this.y2 - this.y1)/2
+            }
+        }
+        let scaleX = window.playerSett.w / (playerCords.x2 - playerCords.x1)  
+        let scaleY = window.playerSett.h / (playerCords.y2 - playerCords.y1)
+        let scaledPlayerParts = []  
+        for(let elem of can.playerPartArr)
+        {
+            elem.x -= playerCords.x1
+            elem.y -= playerCords.y1
+            let data = elem.calcScaled(scaleX,scaleY);
+            scaledPlayerParts.push(new PlayerPart(data.x,data.y,data.w,data.h,elem.color,elem.moveType,elem.viewType))
+        }
+        window.playerSkin = scaledPlayerParts
+        UI = {}
+        clearInterval(window.UI.refreshInter)
+        hideElem(can)
+        showElem(window.canSett.can)
+        loadMenu()
+    }
+    function createObjPreview() {
+        test = new PlayerPart(0, 0, 100, 100, "rgba(9,9,9,.1)", "straight", UI.createSett.type)
+    }
+    let but1 = new UIButton(0, 0, 50, 50, ctx, "Добавить", "white", "elipse", {
+        clickFunc: (elem) => {
+            let deleteBut = UI.buttonArr.searchById(4)
+            if (deleteBut.selected) deleteBut.selected = false
+            if (!elem.selected) {
+                UI.createMod = false
+                UI.createSett.type = "none"
+            }
+            UI.deleteMod = false
+        },
+        hoverFunc: (elem) => {
+            elem.color = "rgb(238, 238, 238)"
+        },
+        mouseOutFunc: (elem) => {
+            elem.color = "white"
+        }
+    }, new DOMElement("listHead", 1, 1, 1, false))
+    let but2 = new UIButton(60, 0, 80, 50, ctx, "Прямоугольник", "white", "square", {
+        clickFunc: (elem) => {
+            UI.createMod = true
+            UI.deleteMod  = false
+            UI.createSett.type = "square"
+            
+            createObjPreview()
+            test.x = elem.e.x - test.w / 2
+            test.y = elem.e.y - test.h / 2
+            return 1
+        },
+        hoverFunc: (elem) => {
+            elem.color = "rgb(238, 238, 238)"
+        },
+        mouseOutFunc: (elem) => {
+            elem.color = "white"
+        }
+    }, new DOMElement("listElement", 2, 1, 1, true))
+    let but3 = new UIButton(150, 0, 100, 50, ctx, "Элипс", "white", "elipse", {
+        clickFunc: (elem) => {
+            UI.createMod = true
+            UI.deleteMod = false
+            UI.createSett.type = "elipse"
+            
+            createObjPreview()
+            test.x = elem.e.x - test.w / 2
+            test.y = elem.e.y - test.h / 2
+            return 1
+        },
+        hoverFunc: (elem) => {
+            elem.color = "rgb(238, 238, 238)"
+        },
+        mouseOutFunc: (elem) => {
+            elem.color = "white"
+        }
+    }, new DOMElement("listElement", 3, 1, 1, true))
+    let but4 = new UIButton(0, 60, 50, 50, ctx, "Удалить", "white", "elipse", {
+        clickFunc: (elem) => {
+            let createBut = UI.buttonArr.searchById(1)
+            if (createBut.selected){
+                createBut.selected = false
+                createBut.typeFunc(createBut)
+            }
+            if(elem.selected){
+                UI.createMod = false
+                UI.deleteMod = true
+            }else UI.deleteMod = false
+            return 1
+        },
+        hoverFunc: (elem) => {
+            elem.color = "rgb(238, 238, 238)"
+        },
+        mouseOutFunc: (elem) => {
+            elem.color = "white"
+        }
+    }, new DOMElement("listHead", 4, 3, 3, false))
+    let doneBut = new UIButton(0,120 ,50 ,50 ,ctx, "Создать","white","elipse", {
+        clickFunc: (elem) => {
+            closePlayerConstructor()
+        },
+        hoverFunc: (elem) => {
+            elem.color = "rgb(238, 238, 238)"
+        },
+        mouseOutFunc: (elem) => {
+            elem.color = "white"
+        }
+    },new DOMElement("listElement","completeBut",4,4,false ))
+    UI.buttonArr.push(but1, but2, but3, but4,doneBut)
+    loadColorPannel()
+    checkUIButLists()
+    
+    function checkButColision(x, y, event) {
+        let e = {
+            x: x,
+            y: y
+        }
+        for (let elem of UI.buttonArr) {
+            if (elem.collision({
+                    x: x,
+                    y: y,
+                    w: 1,
+                    h: 1
+                })) {
+                switch (event) {
+                    case "click":
+                        elem.clickEvent(e)
+                        return true
+                        break
+                    case "mousemove":
+                        if (!elem.hoverActive) {
+                            elem.hoverEvent(e)
+                            elem.hoverActive = true
+                            return true
+                        }
+                        break
+                    default:
+                        console.log("UIBut: Wrong event enter");
+                }
+            } else {
+                if (elem.hoverActive) {
+                    elem.hoverActive = false
+                    elem.mouseOutEvent(e)
+                }
+            }
+        }
+        return false
+    }
+
+    function loadColorPannel() {
+        UI.colorButArr = []
+        let colors = []
+        UI.color = "black"
+        let h = 50,
+        w = 50,
+        x = 0,
+        y = 0,
+        butCount = 9,
+        margins = 10
+        for(let i = 0;i<butCount;i++)
+        {
+
+        }
+        for (let i = 0; i < butCount; i++) {
+            x = (can.width - (w * butCount + margins *(butCount-1))) / 2 + i * margins + i*w
+            y = can.height - margins - h
+            let colorBut = new UIButton(x, y, w, h, ctx, "", getRandCSSColor(), "elipse", {
+                clickFunc: (elem) => {
+                    UI.color = elem.color
+                    for(let elm of can.playerPartArr){
+                        if(elm.selected){
+                            elm.color = elem.color
+                        }
+                    }
+                },
+                hoverFunc: ()=>{},
+                mouseOutFunc: ()=>{}
+            }, new DOMElement("listElement", i + 5, 2, 2, false))
+            UI.colorButArr.push(colorBut)
+            UI.buttonArr.push(colorBut)
+        }
+    }
+
+    function checkPlayerPartCol(x, y) {
+        let arr = can.playerPartArr
+        if (typeof (arr) !== "undefined") {
+            for (let elem of arr) {
+                elem.selected = false
+            }
+            for (let i = arr.length - 1; i >= 0; i--) {
+                if (arr[i].collision({
+                        x: x,
+                        y: y,
+                        w: 1,
+                        h: 1
+                    })) {
+                    arr[i].selected = true
+                    arr[i].findPart(x, y)
+                    if (arr.length > 1) {
+                        arr.sort((a, b) => {
+                            return a.selected - b.selected
+                        })
+                    }
+                    break
+                }
+            }
+        }
+    }
+    can.addEventListener("click", function (e) {
+        let x = e.clientX - can.getBoundingClientRect().x
+        let y = e.clientY - can.getBoundingClientRect().y
+        checkPlayerPartCol(x, y)
+        if (!checkButColision(x, y, "click") && UI.createMod) {
+            let newPlayerPart = new PlayerPart(x - 50, y - 50, 100, 100, UI.color, "straight", window.UI.createSett.type)
+            can.playerPartArr.push(newPlayerPart)
+
+        }
+        else if (UI.deleteMod){
+            let arr = can.playerPartArr
+            for(let i = arr.length-1;i>=0;i--){
+                if(arr[i].selected)[
+                    arr.splice(i)
+                ]
+            }
+        }
+    })
+
+    function playerPartArrHover(x, y) {
+        let arr = can.playerPartArr
+        if (typeof (arr) !== "undefined") {
+            for (let elem of arr) {
+                if (elem.selected) {
+                    elem.findPart(x, y)
+                }
+                if (can.mouseDown) {
+                    elem.drag(x, y)
+                }
+            }
+        }
+    }
+    can.addEventListener("mousemove", function (e) {
+        let x = e.clientX - can.getBoundingClientRect().x
+        let y = e.clientY - can.getBoundingClientRect().y
+        checkButColision(x, y, "mousemove")
+        if (UI.createMod) {
+            test.x = x - test.w / 2
+            test.y = y - test.h / 2
+        }
+        playerPartArrHover(x, y)
+    })
+
+    function playerPartArrMouseDown(x, y) {
+        let arr = can.playerPartArr
+        if (typeof (arr) !== "undefined") {
+            for (let elem of arr) {
+                elem.lockPartFocus = true
+                elem.touchPoint.x = x
+                elem.touchPoint.y = y
+                elem.touchPoint.difX = elem.touchPoint.x - elem.x
+                elem.touchPoint.difY = elem.touchPoint.y - elem.y
+            }
+        }
+    }
+    can.addEventListener("mousedown", function (e) {
+        let x = e.clientX - can.getBoundingClientRect().x
+        let y = e.clientY - can.getBoundingClientRect().y
+        //checkButColision(e.clientX - can.getBoundingClientRect().x, e.clientY, "mousemove")
+        can.mouseDown = true
+        playerPartArrMouseDown(x, y)
+    })
+
+    function playerPartArrMouseUp() {
+        let arr = can.playerPartArr
+        if (typeof (arr) !== "undefined") {
+            for (let elem of arr) {
+                elem.lockPartFocus = false
+                elem.draggble = true
+            }
+        }
+    }
+    can.addEventListener("mouseup", function () {
+        can.mouseDown = false
+        playerPartArrMouseUp()
+    })
+
+    function drawUI() {
+        if (UI.createMod) {
+            test.draw(ctx)
+        }
+        for (let elem of UI.buttonArr) {
+            elem.draw()
+        }
+        if (typeof (UI.colorButArr) !== "undefined") {
+            for (let elem of UI.colorButArr) {
+                elem.draw()
+            }
+        }
+        if(typeof(window.playerSkin)!=="undefined"){
+            for(let elem of window.playerSkin){
+                elem.draw(ctx)
+            }
+        }
+    }
+
+    function drawPlayerArr() {
+        if (typeof (can.playerPartArr) !== "undefined") {
+            for (let elem of can.playerPartArr) {
+                elem.draw(ctx)
+            }
+        }
+    }
+
+    function refreshInterval() {
+        resetCanvas(ctx, can)
+        drawUI()
+        drawPlayerArr()
+        drawAnimations()
+    }
+    UI.refreshInter = setInterval(refreshInterval, 10)
+    UI.refreshRefresher = function () {
+        refreshInterval()
+    }
 }
 
 function createBackground(canctx, can) {
@@ -278,29 +698,12 @@ function createBackground(canctx, can) {
         }
     }
 
-    function drawAnimations() {
-        if (typeof (window.animationArr) !== "undefined") {
-            for (let i = window.animationArr.length - 1; i >= 0; i--) {
-                let timer
-                if (window.animationArr[i].animationOn) {
-                    window.animationArr[i].func()
-                    if (window.animationArr[i].firstRun) {
-                        timer = setTimeout(function () {
-                            window.animationArr[i].animationOn = false
-                            window.animationArr.splice(i)
-                        }, window.animationArr[i].time)
-                        window.animationArr[i].firstRun = false
-                    }
-                }
-            }
-        }
-    }
 
     function moveParticalesDown() {
         function checkCol(elem, index) {
             if (window.Player.collision(elem)) {
-                if(elem.type == "Damage Particle"){
-                    elem.inflictDamage(window.Player,elem.damage)
+                if (elem.type == "Damage Particle") {
+                    elem.inflictDamage(window.Player, elem.damage)
                 }
                 window.particleArr.splice(index, 1)
                 if (window.Player.increaseSize(2)) {
@@ -310,13 +713,15 @@ function createBackground(canctx, can) {
                 }
             }
         }
+        let x = 0,
+            y = 1
         for (let i = window.particleArr.length - 1; i >= 0; i--) {
-            if (window.particleArr[i].type == "straight") {
-                window.particleArr[i].move(0, 1 * window.partSett.particleSpeed)
+            if (window.particleArr[i].moveType == "straight") {
+                window.particleArr[i].move(x, y * window.partSett.particleSpeed)
             } else {
                 window.particleArr[i].PI += window.particleArr[i].incriment
                 if (window.particleArr[i].PI >= 6.28) window.particleArr[i].PI -= 6.28
-                window.particleArr[i].move(Math.cos(window.particleArr[i].PI) * window.particleArr[i].altitude * window.particleArr[i].k, 1 * window.partSett.particleSpeed)
+                window.particleArr[i].move(Math.cos(window.particleArr[i].PI) * window.particleArr[i].altitude * window.particleArr[i].k, y * window.partSett.particleSpeed)
             }
             checkCol(window.particleArr[i], i)
         }
@@ -363,8 +768,8 @@ function createBackground(canctx, can) {
         chance = Math.round(getRandom(0, 10))
         if (chance == 0) {
             type = "Damage Particle"
-            w*=1.5
-            h*=1.5
+            w *= 1.5
+            h *= 1.5
         } else {
             type = "Particle"
         }
@@ -375,7 +780,9 @@ function createBackground(canctx, can) {
                 if (tryN >= 10) break
                 x = randomX()
                 y = -h
-                newPart = createParticle(x, y, w, h, color, moveType, viewType, type, {value:10})
+                newPart = createParticle(x, y, w, h, color, moveType, viewType, type, {
+                    value: 10
+                })
                 createSucses = true
                 for (let i = window.particleArr.length - 1; i >= 0; i--) {
                     if (newPart.collision(window.particleArr[i])) {
@@ -389,7 +796,9 @@ function createBackground(canctx, can) {
         } else {
             x = randomX()
             y = -h
-            newPart = createParticle(x, y, w, h, color, moveType, viewType,type,{value:10})
+            newPart = createParticle(x, y, w, h, color, moveType, viewType, type, {
+                value: 10
+            })
         }
         window.particleArr.push(newPart)
         window.createInter = setTimeout(createPartInterval, (1000 / window.partSett.particleSpawnPerSec))
@@ -436,7 +845,7 @@ function createBackground(canctx, can) {
         for (let elem of window.particleArr) {
             elem.switchViewType()
         }
-        if (window.partSett.viewType == "square") window.partSett.viewType = "circle"
+        if (window.partSett.viewType == "square") window.partSett.viewType = "elipse"
         else window.partSett.viewType = "square"
     }
     window.canSett.can.addEventListener("mousemove", function (e) {

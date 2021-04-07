@@ -1,5 +1,6 @@
 function startGame() {
-    loadMenu()
+    //loadMenu()
+    preLoadPlayerConsrtuctor()
 }
 
 function loadBackground(canctx, can) {

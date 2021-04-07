@@ -1,10 +1,16 @@
-let canvas = document.body.querySelector("#mainCanvas")
-let ctx = canvas.getContext('2d'); // Контекст холста
+let gameCanvas = document.createElement("canvas")
+gameCanvas.height = aHeight
+gameCanvas.width = 600
+gameCanvas.classList.add("centered")
+gameCanvas.id = "gameCanvas"
+document.body.insertBefore(gameCanvas, document.body.firstChild)
+hideElem(gameCanvas)
+let ctx = gameCanvas.getContext('2d');
 window.addEventListener("resize", RESIZE);
 window.canSett = {
-    can : canvas,   
-    ctx : ctx,
-    background : "pink"
+    can: gameCanvas,
+    ctx: ctx,
+    background: "pink"
 }
 window.partSett = {
     w: 10,
@@ -39,16 +45,16 @@ window.partSett = {
     setParticleSpawnSpeed(x) {
         this.particleSpawnPerSec = x
     },
-    spawnRange:{
+    spawnRange: {
         begin: 0,
         end: window.canSett.can.width - this.w
     },
-    setSpawnRange(begin,end){
+    setSpawnRange(begin, end) {
         this.spawnRange.begin = begin
         this.spawnRange.end = end
     },
-    updateSpawnRange(){
-        window.partSett.setSpawnRange(0,window.canSett.can.width - window.partSett.w)
+    updateSpawnRange() {
+        window.partSett.setSpawnRange(0, window.canSett.can.width - window.partSett.w)
     },
     particleSpeed: 10,
     setParticleSpeed(x) {
@@ -61,7 +67,7 @@ window.partSett = {
         2: "onlyStraight",
         3: "onlySin"
     },
-    viewType:"circle",
+    viewType: "elipse",
     setMode() {
         for (key in this.typeMods) {
             if (key == this.curTypeMode)
@@ -84,29 +90,27 @@ window.partSett = {
     mode: ""
 }
 window.playerSett = {
-    w:70,
-    h:70,
-    position : {
-        x:window.canSett.can.width/2 - this.w/2,
-        y:window.canSett.can.height - 60 - this.h
+    w: 70,
+    h: 70,
+    position: {
+        x: window.canSett.can.width / 2 - this.w / 2,
+        y: window.canSett.can.height - 60 - this.h
     },
-    color:getRandCSSColor(),
-    type:"square",
-    setSize(w,h){
+    color: getRandCSSColor(),
+    type: "skin",
+    setSize(w, h) {
         this.w = w
         this.h = h
     }
 }
 window.gameStarted = false
-window.canvas = canvas
-window.ctx = ctx
-canvas.width = 500
-canvas.height = aHeight
+gameCanvas.width = 500
+gameCanvas.height = aHeight
 window.partSett.dynamicSpeedOn = false
 window.partSett.setParticleSpawnSpeed(50)
 window.partSett.setSize(20, 20)
-window.partSett.setSpawnRange(0,window.canSett.can.width - window.partSett.w)
+window.partSett.setSpawnRange(0, window.canSett.can.width - window.partSett.w)
 window.partSett.setParticleSpeed(4)
-window.playerSett.setSize(50,50)
+window.playerSett.setSize(50, 50)
 let menuButtons = []
 startGame()
